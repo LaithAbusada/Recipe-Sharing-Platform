@@ -1,12 +1,16 @@
-import React, { useState } from "react";
+// components/PostDetails.tsx
+import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
 import { Timestamp } from "firebase/firestore";
-import { Post, Comment } from "./types";
+import { Recipe, Comment } from "./types";
 import { formatTimestamp } from "@/utils/formatTimeStamp";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth, firestore } from "@/pages/firebase/config";
+import { doc, getDoc } from "firebase/firestore";
 
 interface PostDetailsProps {
-  post: Post;
+  post: Recipe;
   onClose: () => void;
   onCommentSubmit: (postId: string, comment: Comment) => void;
 }
@@ -18,6 +22,23 @@ const PostDetails: React.FC<PostDetailsProps> = ({
 }) => {
   const [commentContent, setCommentContent] = useState<string>("");
   const [localComments, setLocalComments] = useState<Comment[]>(post.comments);
+  const [userName, setUserName] = useState<string>("");
+  const [user, loadingAuth, errorAuth] = useAuthState(auth);
+
+  useEffect(() => {
+    const fetchUserName = async () => {
+      if (user) {
+        const userDoc = await getDoc(doc(firestore, "users", user.uid));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          const fullName = `${userData.firstName} ${userData.lastName}`;
+          setUserName(fullName || user.email || ""); // Fetching firstName and lastName from Firestore
+        }
+      }
+    };
+
+    fetchUserName();
+  }, [user]);
 
   const handleCommentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setCommentContent(e.target.value);
@@ -28,7 +49,7 @@ const PostDetails: React.FC<PostDetailsProps> = ({
     if (commentContent.trim()) {
       const newComment: Comment = {
         id: Math.random().toString(36).substr(2, 9),
-        userName: "Jane Doe", // Replace with the actual user's name
+        userName: userName,
         content: commentContent,
         timestamp: Timestamp.now(),
       };
@@ -60,7 +81,24 @@ const PostDetails: React.FC<PostDetailsProps> = ({
               {formatTimestamp(post.timestamp)}
             </div>
           </div>
-          <p className="text-gray-800 mb-2">{post.content}</p>
+          <h3 className="text-xl font-bold mb-2">{post.title}</h3>
+          <p className="text-gray-600 mb-2">Cooking Time: {post.cookingTime}</p>
+          <h4 className="font-bold">Ingredients:</h4>
+          <ul className="list-disc ml-5 mb-2">
+            {post.ingredients.map((ingredient, idx) => (
+              <li key={idx} className="text-gray-800">
+                {ingredient}
+              </li>
+            ))}
+          </ul>
+          <h4 className="font-bold">Preparation Steps:</h4>
+          <ol className="list-decimal ml-5 mb-2">
+            {post.steps.map((step, idx) => (
+              <li key={idx} className="text-gray-800">
+                {step}
+              </li>
+            ))}
+          </ol>
           <div className="grid grid-cols-2 gap-4">
             {post.imageUrls.map((imageUrl, idx) => (
               <img

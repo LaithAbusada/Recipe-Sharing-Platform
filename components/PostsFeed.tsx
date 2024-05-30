@@ -1,20 +1,19 @@
-// components/PostsFeed.tsx
 import React, { useState } from "react";
 import PostDetails from "./PostDetails";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCommentDots } from "@fortawesome/free-solid-svg-icons";
-import { Post, Comment } from "./types";
+import { Recipe, Comment } from "./types";
 import { formatTimestamp } from "@/utils/formatTimeStamp";
 
 interface PostsFeedProps {
-  posts: Post[];
+  posts: Recipe[];
   onCommentSubmit: (postId: string, comment: Comment) => void;
 }
 
 const PostsFeed: React.FC<PostsFeedProps> = ({ posts, onCommentSubmit }) => {
-  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+  const [selectedPost, setSelectedPost] = useState<Recipe | null>(null);
 
-  const handlePostClick = (post: Post) => {
+  const handlePostClick = (post: Recipe) => {
     setSelectedPost(post);
   };
 
@@ -45,7 +44,26 @@ const PostsFeed: React.FC<PostsFeedProps> = ({ posts, onCommentSubmit }) => {
                 {formatTimestamp(post.timestamp)}
               </div>
             </div>
-            <p className="text-gray-800 mb-2">{post.content}</p>
+            <h3 className="text-xl font-bold mb-2">{post.title}</h3>
+            <p className="text-gray-600 mb-2">
+              Cooking Time: {post.cookingTime}
+            </p>
+            <h4 className="font-bold">Ingredients:</h4>
+            <ul className="list-disc ml-5 mb-2">
+              {post.ingredients.map((ingredient, idx) => (
+                <li key={idx} className="text-gray-800">
+                  {ingredient}
+                </li>
+              ))}
+            </ul>
+            <h4 className="font-bold">Preparation Steps:</h4>
+            <ol className="list-decimal ml-5 mb-2">
+              {post.steps.map((step, idx) => (
+                <li key={idx} className="text-gray-800">
+                  {step}
+                </li>
+              ))}
+            </ol>
             {post.imageUrls.length > 0 && (
               <div className="grid grid-cols-2 gap-4">
                 {post.imageUrls.map((imageUrl, idx) => (

@@ -1,26 +1,62 @@
-import React, { useState } from "react";
+// components/CreateRecipe.tsx
+import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faImage, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { Timestamp } from "firebase/firestore";
 import { v4 as uuidv4 } from "uuid"; // Import uuid library
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { storage } from "@/pages/firebase/config"; // Import storage from Firebase config
-import { Post } from "./types";
+import { storage, firestore, auth } from "@/pages/firebase/config"; // Import storage and auth from Firebase config
+import { Recipe } from "./types";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { doc, getDoc } from "firebase/firestore";
 
-interface CreatePostProps {
-  onPostSubmit: (post: Post) => void;
+interface CreateRecipeProps {
+  onRecipeSubmit: (recipe: Recipe) => void;
 }
 
-const CreatePost: React.FC<CreatePostProps> = ({ onPostSubmit }) => {
-  const [postContent, setPostContent] = useState<string>("");
+const CreateRecipe: React.FC<CreateRecipeProps> = ({ onRecipeSubmit }) => {
+  const [title, setTitle] = useState<string>("");
+  const [ingredients, setIngredients] = useState<string>("");
+  const [steps, setSteps] = useState<string>("");
+  const [cookingTime, setCookingTime] = useState<string>("");
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const userName = "John Doe"; // Replace with the actual user's name
+  const [userName, setUserName] = useState<string>("");
+  const [user, loadingAuth, errorAuth] = useAuthState(auth);
   const timestamp = Timestamp.now();
 
-  const handlePostChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setPostContent(e.target.value);
+  useEffect(() => {
+    const fetchUserName = async () => {
+      if (user) {
+        const userDoc = await getDoc(doc(firestore, "users", user.uid));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          const fullName = `${userData.firstName} ${userData.lastName}`;
+          setUserName(fullName || user.email || ""); // Fetching firstName and lastName from Firestore
+        }
+      }
+    };
+
+    fetchUserName();
+  }, [user]);
+
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTitle(e.target.value);
+  };
+
+  const handleIngredientsChange = (
+    e: React.ChangeEvent<HTMLTextAreaElement>
+  ) => {
+    setIngredients(e.target.value);
+  };
+
+  const handleStepsChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setSteps(e.target.value);
+  };
+
+  const handleCookingTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCookingTime(e.target.value);
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -40,13 +76,21 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostSubmit }) => {
     );
   };
 
-  const handlePostSubmit = async (e: React.FormEvent) => {
+  const handleRecipeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    if (postContent.trim() || images.length > 0) {
-      const newPost: Post = {
+    if (
+      title.trim() ||
+      ingredients.trim() ||
+      steps.trim() ||
+      images.length > 0
+    ) {
+      const newRecipe: Recipe = {
         id: uuidv4(), // Generate a unique ID
-        content: postContent,
+        title,
+        ingredients: ingredients.split("\n"),
+        steps: steps.split("\n"),
+        cookingTime,
         imageUrls: [], // Initialize as an empty array, to be filled after upload
         userName,
         timestamp,
@@ -54,15 +98,18 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostSubmit }) => {
       };
 
       const uploadPromises = images.map(async (image) => {
-        const imageRef = ref(storage, `images/${newPost.id}/${image.name}`);
+        const imageRef = ref(storage, `images/${newRecipe.id}/${image.name}`);
         const snapshot = await uploadBytes(imageRef, image);
         return getDownloadURL(snapshot.ref);
       });
 
-      newPost.imageUrls = await Promise.all(uploadPromises);
+      newRecipe.imageUrls = await Promise.all(uploadPromises);
 
-      await onPostSubmit(newPost);
-      setPostContent("");
+      await onRecipeSubmit(newRecipe);
+      setTitle("");
+      setIngredients("");
+      setSteps("");
+      setCookingTime("");
       setImages([]);
       setImagePreviews([]);
     }
@@ -78,13 +125,34 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostSubmit }) => {
         {/* Red-Orange */}
         Share Your Recipe
       </h1>
-      <form onSubmit={handlePostSubmit}>
+      <form onSubmit={handleRecipeSubmit}>
+        <input
+          type="text"
+          value={title}
+          onChange={handleTitleChange}
+          placeholder="Recipe Title"
+          className="w-full p-3 mb-4 border border-fed99b rounded-md focus:outline-none focus:ring-2 focus:ring-fe654f"
+        />
         <textarea
-          value={postContent}
-          onChange={handlePostChange}
-          placeholder="Write your recipe here..."
+          value={ingredients}
+          onChange={handleIngredientsChange}
+          placeholder="Ingredients (one per line)"
           className="w-full p-3 mb-4 border border-fed99b rounded-md focus:outline-none focus:ring-2 focus:ring-fe654f"
           rows={4}
+        />
+        <textarea
+          value={steps}
+          onChange={handleStepsChange}
+          placeholder="Preparation Steps (one per line)"
+          className="w-full p-3 mb-4 border border-fed99b rounded-md focus:outline-none focus:ring-2 focus:ring-fe654f"
+          rows={4}
+        />
+        <input
+          type="text"
+          value={cookingTime}
+          onChange={handleCookingTimeChange}
+          placeholder="Cooking Time"
+          className="w-full p-3 mb-4 border border-fed99b rounded-md focus:outline-none focus:ring-2 focus:ring-fe654f"
         />
         <div className="flex items-center mb-4">
           <label
@@ -135,4 +203,4 @@ const CreatePost: React.FC<CreatePostProps> = ({ onPostSubmit }) => {
   );
 };
 
-export default CreatePost;
+export default CreateRecipe;

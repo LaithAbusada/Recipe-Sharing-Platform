@@ -8,13 +8,16 @@ export interface Comment {
   timestamp: Timestamp;
 }
 
-export interface Post {
+export interface Recipe {
   id: string;
-  content: string;
+  title: string;
+  ingredients: string[];
+  steps: string[];
+  cookingTime: string;
   imageUrls: string[];
   userName: string;
   timestamp: Timestamp;
   comments: Comment[];
 }
 
-export type NewPost = Omit<Post, "id">;
+export type NewRecipe = Omit<Recipe, "id">;
