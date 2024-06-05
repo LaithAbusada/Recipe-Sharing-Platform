@@ -4,6 +4,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCommentDots } from "@fortawesome/free-solid-svg-icons";
 import { Recipe, Comment } from "./types";
 import { formatTimestamp } from "@/utils/formatTimeStamp";
+import { useRouter } from "next/router"; // Import useRouter
 
 interface PostsFeedProps {
   posts: Recipe[];
@@ -12,9 +13,10 @@ interface PostsFeedProps {
 
 const PostsFeed: React.FC<PostsFeedProps> = ({ posts, onCommentSubmit }) => {
   const [selectedPost, setSelectedPost] = useState<Recipe | null>(null);
+  const router = useRouter(); // Initialize useRouter
 
-  const handlePostClick = (post: Recipe) => {
-    setSelectedPost(post);
+  const handleCommentIconClick = (postId: string) => {
+    router.push(`/post/${postId}`); // Navigate to the post details page
   };
 
   const handleCloseDetails = () => {
@@ -31,11 +33,7 @@ const PostsFeed: React.FC<PostsFeedProps> = ({ posts, onCommentSubmit }) => {
         </div>
       ) : (
         posts.map((post) => (
-          <div
-            key={post.id}
-            className="bg-white p-4 rounded-lg shadow-md mb-4 cursor-pointer"
-            onClick={() => handlePostClick(post)}
-          >
+          <div key={post.id} className="bg-white p-4 rounded-lg shadow-md mb-4">
             <div className="flex items-center mb-2">
               <div className="mr-2 text-gray-700 font-bold">
                 {post.userName}
@@ -79,7 +77,8 @@ const PostsFeed: React.FC<PostsFeedProps> = ({ posts, onCommentSubmit }) => {
             <div className="flex items-center mt-2">
               <FontAwesomeIcon
                 icon={faCommentDots}
-                className="text-gray-600 mr-1"
+                className="text-gray-600 mr-1 cursor-pointer"
+                onClick={() => handleCommentIconClick(post.id)} // Handle comment icon click
               />
               <span className="text-gray-600">{post.comments.length}</span>
             </div>
