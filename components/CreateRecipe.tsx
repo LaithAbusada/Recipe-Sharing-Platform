@@ -2,9 +2,9 @@ import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faImage, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { Timestamp } from "firebase/firestore";
-import { v4 as uuidv4 } from "uuid"; // Import uuid library
+import { v4 as uuidv4 } from "uuid";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { storage, firestore, auth } from "@/pages/firebase/config"; // Import storage and auth from Firebase config
+import { storage, firestore, auth } from "@/pages/firebase/config";
 import { Recipe } from "./types";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { doc, getDoc } from "firebase/firestore";
@@ -35,12 +35,8 @@ const CreateRecipe: React.FC<CreateRecipeProps> = ({ onRecipeSubmit }) => {
             const fullName = `${userData.firstName} ${userData.lastName}`;
             setUserName(fullName || user.email || "");
           }
-        } catch (error: unknown) {
-          if (error instanceof Error) {
-            console.error("Error fetching user data:", error.message);
-          } else {
-            console.error("Error fetching user data:", String(error));
-          }
+        } catch (error) {
+          console.error("Error fetching user data:", error);
         }
       }
     };
@@ -86,6 +82,7 @@ const CreateRecipe: React.FC<CreateRecipeProps> = ({ onRecipeSubmit }) => {
   const handleRecipeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
     try {
       if (
         title.trim() ||
@@ -106,9 +103,13 @@ const CreateRecipe: React.FC<CreateRecipeProps> = ({ onRecipeSubmit }) => {
         };
 
         const uploadPromises = images.map(async (image) => {
-          const imageRef = ref(storage, `images/${newRecipe.id}/${image.name}`);
+          const imageRef = ref(
+            storage,
+            `images/laith/${uuidv4()}-${image.name}`
+          );
           const snapshot = await uploadBytes(imageRef, image);
-          return getDownloadURL(snapshot.ref);
+          const downloadURL = await getDownloadURL(snapshot.ref);
+          return downloadURL;
         });
 
         newRecipe.imageUrls = await Promise.all(uploadPromises);
@@ -121,12 +122,8 @@ const CreateRecipe: React.FC<CreateRecipeProps> = ({ onRecipeSubmit }) => {
         setImages([]);
         setImagePreviews([]);
       }
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        console.error("Error submitting recipe:", error.message);
-      } else {
-        console.error("Error submitting recipe:", String(error));
-      }
+    } catch (error) {
+      console.error("Error submitting recipe:", error);
     } finally {
       setLoading(false);
     }
