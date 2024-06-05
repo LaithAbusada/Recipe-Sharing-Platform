@@ -12,6 +12,7 @@ import {
   updateDoc,
   doc,
   arrayUnion,
+  addDoc,
 } from "firebase/firestore";
 import { formatTimestamp } from "@/utils/formatTimeStamp";
 import { Timestamp } from "firebase/firestore";
@@ -52,19 +53,15 @@ const MainPage: React.FC = () => {
 
   const handleRecipeSubmit = async (recipe: Recipe) => {
     try {
-      const response = await fetch("/api/recipes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(recipe),
-      });
+      const newRecipe = {
+        ...recipe,
+        timestamp: Timestamp.now(),
+      };
 
-      if (response.ok) {
-        console.log("New recipe added");
-        fetchPosts(); // Optionally re-fetch posts to update the state
-      } else {
-        const errorText = await response.text();
-        console.error("Error adding recipe:", errorText);
-      }
+      await addDoc(collection(firestore, "recipes"), newRecipe);
+
+      console.log("New recipe added");
+      fetchPosts(); // Optionally re-fetch posts to update the state
     } catch (error: unknown) {
       if (error instanceof Error) {
         console.error("Error adding recipe:", error.message);
