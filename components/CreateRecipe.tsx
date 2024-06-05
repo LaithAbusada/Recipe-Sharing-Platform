@@ -90,8 +90,7 @@ const CreateRecipe: React.FC<CreateRecipeProps> = ({ onRecipeSubmit }) => {
         steps.trim() ||
         images.length > 0
       ) {
-        const newRecipe: Recipe = {
-          id: uuidv4(), // Generate a unique ID
+        const newRecipe: Omit<Recipe, "id"> = {
           title,
           ingredients: ingredients.split("\n"),
           steps: steps.split("\n"),
@@ -114,8 +113,10 @@ const CreateRecipe: React.FC<CreateRecipeProps> = ({ onRecipeSubmit }) => {
 
         newRecipe.imageUrls = await Promise.all(uploadPromises);
 
-        await axios.post("/api/recipes", newRecipe);
-        await onRecipeSubmit(newRecipe);
+        const response = await axios.post("/api/recipes", newRecipe);
+        const addedRecipe = response.data.recipe;
+
+        await onRecipeSubmit(addedRecipe);
         setTitle("");
         setIngredients("");
         setSteps("");

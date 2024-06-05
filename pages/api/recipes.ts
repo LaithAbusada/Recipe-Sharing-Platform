@@ -1,7 +1,7 @@
 // pages/api/recipes.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { firestore } from '@/pages/firebase/config';
-import { collection, addDoc, query, orderBy, getDocs, updateDoc, doc, where } from 'firebase/firestore';
+import { collection, addDoc, query, orderBy, getDocs, updateDoc, doc, where,getDoc } from 'firebase/firestore';
 import { Recipe, Comment } from '@/components/types';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
@@ -15,21 +15,19 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     }
 
     if (req.method === 'POST') {
-      const newRecipe: Recipe = req.body;
+      const newRecipe: Omit<Recipe, 'id'> = req.body;
       const postsCollection = collection(firestore, "recipes");
-      await addDoc(postsCollection, newRecipe);
-      return res.status(201).json({ message: 'Recipe added successfully' });
+      const docRef = await addDoc(postsCollection, newRecipe);
+      const addedRecipe = { id: docRef.id, ...newRecipe };
+      return res.status(201).json({ message: 'Recipe added successfully', recipe: addedRecipe });
     }
 
     if (req.method === 'PUT') {
       const { postId, comment }: { postId: string; comment: Comment } = req.body;
-      const postsCollection = collection(firestore, "recipes");
-      const postsQuery = query(postsCollection, where("id", "==", postId));
-      const querySnapshot = await getDocs(postsQuery);
+      const postRef = doc(firestore, "recipes", postId);
+      const postDoc = await getDoc(postRef);
 
-      if (!querySnapshot.empty) {
-        const postDoc = querySnapshot.docs[0];
-        const postRef = doc(firestore, `recipes/${postDoc.id}`);
+      if (postDoc.exists()) {
         const post = postDoc.data() as Recipe;
         const updatedComments = [...post.comments, comment];
         await updateDoc(postRef, { comments: updatedComments });
