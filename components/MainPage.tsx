@@ -3,18 +3,7 @@ import CreateRecipe from "./CreateRecipe";
 import PostsFeed from "./PostsFeed";
 import Navbar from "./Navbar";
 import { Recipe, Comment } from "./types";
-import { firestore } from "@/pages/firebase/config";
-import {
-  collection,
-  query,
-  orderBy,
-  getDocs,
-  updateDoc,
-  doc,
-  arrayUnion,
-  addDoc,
-} from "firebase/firestore";
-import { formatTimestamp } from "@/utils/formatTimeStamp";
+import axios from "axios";
 import { Timestamp } from "firebase/firestore";
 
 const MainPage: React.FC = () => {
@@ -24,24 +13,17 @@ const MainPage: React.FC = () => {
   const fetchPosts = async () => {
     setLoading(true);
     try {
-      const postsCollection = collection(firestore, "recipes");
-      const postsQuery = query(postsCollection, orderBy("timestamp", "desc"));
-      const querySnapshot = await getDocs(postsQuery);
-      const recipes: Recipe[] = querySnapshot.docs.map((doc) => {
-        const data = doc.data();
-        const timestamp =
-          data.timestamp instanceof Timestamp
-            ? data.timestamp
-            : Timestamp.fromDate(new Date(data.timestamp));
-        return { ...data, timestamp, id: doc.id } as Recipe;
+      const response = await axios.get("/api/recipes");
+      const recipes: Recipe[] = response.data.map((data: any) => {
+        const timestamp = new Timestamp(
+          data.timestamp.seconds,
+          data.timestamp.nanoseconds
+        );
+        return { ...data, timestamp } as Recipe;
       });
       setPosts(recipes);
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        console.error("Error fetching recipes:", error.message);
-      } else {
-        console.error("Error fetching recipes:", String(error));
-      }
+    } catch (error) {
+      console.error("Error fetching recipes:", error);
     } finally {
       setLoading(false);
     }
@@ -52,38 +34,16 @@ const MainPage: React.FC = () => {
   }, []);
 
   const handleRecipeSubmit = async (recipe: Recipe) => {
-    try {
-      const newRecipe = {
-        ...recipe,
-        timestamp: Timestamp.now(),
-      };
-
-      await addDoc(collection(firestore, "recipes"), newRecipe);
-
-      console.log("New recipe added");
-      fetchPosts(); // Optionally re-fetch posts to update the state
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        console.error("Error adding recipe:", error.message);
-      } else {
-        console.error("Error adding recipe:", String(error));
-      }
-    }
+    await fetchPosts();
   };
 
   const handleCommentSubmit = async (postId: string, comment: Comment) => {
     try {
-      const postRef = doc(firestore, "recipes", postId);
-      await updateDoc(postRef, {
-        comments: arrayUnion(comment),
-      });
+      await axios.put("/api/recipes", { postId, comment });
       console.log("Comment added");
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        console.error("Error adding comment:", error.message);
-      } else {
-        console.error("Error adding comment:", String(error));
-      }
+      fetchPosts(); // Optionally re-fetch posts to update the state
+    } catch (error) {
+      console.error("Error adding comment:", error);
     }
   };
 

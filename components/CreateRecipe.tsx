@@ -4,10 +4,10 @@ import { faImage, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { Timestamp } from "firebase/firestore";
 import { v4 as uuidv4 } from "uuid";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { storage, firestore, auth } from "@/pages/firebase/config";
+import { storage, auth } from "@/pages/firebase/config";
 import { Recipe } from "./types";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { doc, getDoc } from "firebase/firestore";
+import axios from "axios";
 
 interface CreateRecipeProps {
   onRecipeSubmit: (recipe: Recipe) => void;
@@ -29,12 +29,12 @@ const CreateRecipe: React.FC<CreateRecipeProps> = ({ onRecipeSubmit }) => {
     const fetchUserName = async () => {
       if (user) {
         try {
-          const userDoc = await getDoc(doc(firestore, "users", user.uid));
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
-            const fullName = `${userData.firstName} ${userData.lastName}`;
-            setUserName(fullName || user.email || "");
-          }
+          const response = await axios.get(`/api/users`, {
+            params: { uid: user.uid },
+          });
+          const userData = response.data;
+          const fullName = `${userData.fullName}`;
+          setUserName(fullName || user.email || "");
         } catch (error) {
           console.error("Error fetching user data:", error);
         }
@@ -114,6 +114,7 @@ const CreateRecipe: React.FC<CreateRecipeProps> = ({ onRecipeSubmit }) => {
 
         newRecipe.imageUrls = await Promise.all(uploadPromises);
 
+        await axios.post("/api/recipes", newRecipe);
         await onRecipeSubmit(newRecipe);
         setTitle("");
         setIngredients("");

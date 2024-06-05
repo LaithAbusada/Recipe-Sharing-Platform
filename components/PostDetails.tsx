@@ -5,8 +5,8 @@ import { Timestamp } from "firebase/firestore";
 import { Recipe, Comment } from "./types";
 import { formatTimestamp } from "@/utils/formatTimeStamp";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { auth, firestore } from "@/pages/firebase/config";
-import { doc, getDoc } from "firebase/firestore";
+import { auth } from "@/pages/firebase/config";
+import axios from "axios";
 
 interface PostDetailsProps {
   post: Recipe;
@@ -28,18 +28,14 @@ const PostDetails: React.FC<PostDetailsProps> = ({
     const fetchUserName = async () => {
       if (user) {
         try {
-          const userDoc = await getDoc(doc(firestore, "users", user.uid));
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
-            const fullName = `${userData.firstName} ${userData.lastName}`;
-            setUserName(fullName || user.email || "");
-          }
-        } catch (error: unknown) {
-          if (error instanceof Error) {
-            console.error("Error fetching user data:", error.message);
-          } else {
-            console.error("Error fetching user data:", String(error));
-          }
+          const response = await axios.get(`/api/users`, {
+            params: { uid: user.uid },
+          });
+          const userData = response.data;
+          const fullName = `${userData.fullName}`;
+          setUserName(fullName || user.email || "");
+        } catch (error) {
+          console.error("Error fetching user data:", error);
         }
       }
     };
@@ -65,12 +61,8 @@ const PostDetails: React.FC<PostDetailsProps> = ({
         setLocalComments([...localComments, newComment]);
         setCommentContent("");
         console.log("New comment added:", newComment);
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          console.error("Error adding comment:", error.message);
-        } else {
-          console.error("Error adding comment:", String(error));
-        }
+      } catch (error) {
+        console.error("Error adding comment:", error);
       }
     }
   };

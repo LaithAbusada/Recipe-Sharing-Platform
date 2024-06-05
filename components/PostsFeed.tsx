@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCommentDots } from "@fortawesome/free-solid-svg-icons";
 import { Recipe, Comment } from "./types";
 import { formatTimestamp } from "@/utils/formatTimeStamp";
-import { useRouter } from "next/router"; // Import useRouter
+import { useRouter } from "next/router";
 
 interface PostsFeedProps {
   posts: Recipe[];
@@ -13,10 +13,10 @@ interface PostsFeedProps {
 
 const PostsFeed: React.FC<PostsFeedProps> = ({ posts, onCommentSubmit }) => {
   const [selectedPost, setSelectedPost] = useState<Recipe | null>(null);
-  const router = useRouter(); // Initialize useRouter
+  const router = useRouter();
 
   const handleCommentIconClick = (postId: string) => {
-    router.push(`/post/${postId}`); // Navigate to the post details page
+    router.push(`/post/${postId}`);
   };
 
   const handleCloseDetails = () => {
@@ -78,7 +78,7 @@ const PostsFeed: React.FC<PostsFeedProps> = ({ posts, onCommentSubmit }) => {
               <FontAwesomeIcon
                 icon={faCommentDots}
                 className="text-gray-600 mr-1 cursor-pointer"
-                onClick={() => handleCommentIconClick(post.id)} // Handle comment icon click
+                onClick={() => handleCommentIconClick(post.id)}
               />
               <span className="text-gray-600">{post.comments.length}</span>
             </div>
