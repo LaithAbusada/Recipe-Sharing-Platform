@@ -1,4 +1,3 @@
-// components/PostDetails.tsx
 import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
@@ -28,11 +27,19 @@ const PostDetails: React.FC<PostDetailsProps> = ({
   useEffect(() => {
     const fetchUserName = async () => {
       if (user) {
-        const userDoc = await getDoc(doc(firestore, "users", user.uid));
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-          const fullName = `${userData.firstName} ${userData.lastName}`;
-          setUserName(fullName || user.email || ""); // Fetching firstName and lastName from Firestore
+        try {
+          const userDoc = await getDoc(doc(firestore, "users", user.uid));
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            const fullName = `${userData.firstName} ${userData.lastName}`;
+            setUserName(fullName || user.email || "");
+          }
+        } catch (error: unknown) {
+          if (error instanceof Error) {
+            console.error("Error fetching user data:", error.message);
+          } else {
+            console.error("Error fetching user data:", String(error));
+          }
         }
       }
     };
@@ -45,7 +52,7 @@ const PostDetails: React.FC<PostDetailsProps> = ({
   };
 
   const handleCommentSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault(); // Prevent the default form submission behavior
     if (commentContent.trim()) {
       const newComment: Comment = {
         id: Math.random().toString(36).substr(2, 9),
@@ -58,8 +65,12 @@ const PostDetails: React.FC<PostDetailsProps> = ({
         setLocalComments([...localComments, newComment]);
         setCommentContent("");
         console.log("New comment added:", newComment);
-      } catch (error) {
-        console.error("Error adding comment: ", error);
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          console.error("Error adding comment:", error.message);
+        } else {
+          console.error("Error adding comment:", String(error));
+        }
       }
     }
   };

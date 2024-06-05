@@ -1,4 +1,3 @@
-// components/CreateRecipe.tsx
 import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faImage, faTimes } from "@fortawesome/free-solid-svg-icons";
@@ -29,11 +28,19 @@ const CreateRecipe: React.FC<CreateRecipeProps> = ({ onRecipeSubmit }) => {
   useEffect(() => {
     const fetchUserName = async () => {
       if (user) {
-        const userDoc = await getDoc(doc(firestore, "users", user.uid));
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-          const fullName = `${userData.firstName} ${userData.lastName}`;
-          setUserName(fullName || user.email || ""); // Fetching firstName and lastName from Firestore
+        try {
+          const userDoc = await getDoc(doc(firestore, "users", user.uid));
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            const fullName = `${userData.firstName} ${userData.lastName}`;
+            setUserName(fullName || user.email || "");
+          }
+        } catch (error: unknown) {
+          if (error instanceof Error) {
+            console.error("Error fetching user data:", error.message);
+          } else {
+            console.error("Error fetching user data:", String(error));
+          }
         }
       }
     };
@@ -63,9 +70,9 @@ const CreateRecipe: React.FC<CreateRecipeProps> = ({ onRecipeSubmit }) => {
     const files = e.target.files;
     if (files) {
       const fileArray = Array.from(files);
-      setImages((prevImages) => [...prevImages, ...fileArray]); // Append new files to existing state
+      setImages((prevImages) => [...prevImages, ...fileArray]);
       const previews = fileArray.map((file) => URL.createObjectURL(file));
-      setImagePreviews((prevPreviews) => [...prevPreviews, ...previews]); // Append new previews to existing state
+      setImagePreviews((prevPreviews) => [...prevPreviews, ...previews]);
     }
   };
 
@@ -79,52 +86,55 @@ const CreateRecipe: React.FC<CreateRecipeProps> = ({ onRecipeSubmit }) => {
   const handleRecipeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    if (
-      title.trim() ||
-      ingredients.trim() ||
-      steps.trim() ||
-      images.length > 0
-    ) {
-      const newRecipe: Recipe = {
-        id: uuidv4(), // Generate a unique ID
-        title,
-        ingredients: ingredients.split("\n"),
-        steps: steps.split("\n"),
-        cookingTime,
-        imageUrls: [], // Initialize as an empty array, to be filled after upload
-        userName,
-        timestamp,
-        comments: [], // Initialize comments as an empty array
-      };
+    try {
+      if (
+        title.trim() ||
+        ingredients.trim() ||
+        steps.trim() ||
+        images.length > 0
+      ) {
+        const newRecipe: Recipe = {
+          id: uuidv4(), // Generate a unique ID
+          title,
+          ingredients: ingredients.split("\n"),
+          steps: steps.split("\n"),
+          cookingTime,
+          imageUrls: [], // Initialize as an empty array, to be filled after upload
+          userName,
+          timestamp,
+          comments: [], // Initialize comments as an empty array
+        };
 
-      const uploadPromises = images.map(async (image) => {
-        const imageRef = ref(storage, `images/${newRecipe.id}/${image.name}`);
-        const snapshot = await uploadBytes(imageRef, image);
-        return getDownloadURL(snapshot.ref);
-      });
+        const uploadPromises = images.map(async (image) => {
+          const imageRef = ref(storage, `images/${newRecipe.id}/${image.name}`);
+          const snapshot = await uploadBytes(imageRef, image);
+          return getDownloadURL(snapshot.ref);
+        });
 
-      newRecipe.imageUrls = await Promise.all(uploadPromises);
+        newRecipe.imageUrls = await Promise.all(uploadPromises);
 
-      await onRecipeSubmit(newRecipe);
-      setTitle("");
-      setIngredients("");
-      setSteps("");
-      setCookingTime("");
-      setImages([]);
-      setImagePreviews([]);
+        await onRecipeSubmit(newRecipe);
+        setTitle("");
+        setIngredients("");
+        setSteps("");
+        setCookingTime("");
+        setImages([]);
+        setImagePreviews([]);
+      }
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error("Error submitting recipe:", error.message);
+      } else {
+        console.error("Error submitting recipe:", String(error));
+      }
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
     <div className="bg-fefeff p-6 rounded-lg shadow-md">
-      {" "}
-      {/* Light White */}
-      <h1 className="text-2xl font-bold mb-4 text-fe654f">
-        {" "}
-        {/* Red-Orange */}
-        Share Your Recipe
-      </h1>
+      <h1 className="text-2xl font-bold mb-4 text-fe654f">Share Your Recipe</h1>
       <form onSubmit={handleRecipeSubmit}>
         <input
           type="text"

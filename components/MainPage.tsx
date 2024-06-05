@@ -1,75 +1,92 @@
-// components/MainPage.tsx
 import React, { useState, useEffect } from "react";
-import CreateRecipe from "./CreatePost";
+import CreateRecipe from "./CreateRecipe";
 import PostsFeed from "./PostsFeed";
 import Navbar from "./Navbar";
+import { Recipe, Comment } from "./types";
 import { firestore } from "@/pages/firebase/config";
 import {
   collection,
-  onSnapshot,
   query,
   orderBy,
-  addDoc,
   getDocs,
-  where,
   updateDoc,
   doc,
+  arrayUnion,
 } from "firebase/firestore";
-import { Recipe, Comment } from "./types";
 import { formatTimestamp } from "@/utils/formatTimeStamp";
+import { Timestamp } from "firebase/firestore";
 
 const MainPage: React.FC = () => {
   const [posts, setPosts] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
+  const fetchPosts = async () => {
+    setLoading(true);
+    try {
+      const postsCollection = collection(firestore, "recipes");
+      const postsQuery = query(postsCollection, orderBy("timestamp", "desc"));
+      const querySnapshot = await getDocs(postsQuery);
+      const recipes: Recipe[] = querySnapshot.docs.map((doc) => {
+        const data = doc.data();
+        const timestamp =
+          data.timestamp instanceof Timestamp
+            ? data.timestamp
+            : Timestamp.fromDate(new Date(data.timestamp));
+        return { ...data, timestamp, id: doc.id } as Recipe;
+      });
+      setPosts(recipes);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error("Error fetching recipes:", error.message);
+      } else {
+        console.error("Error fetching recipes:", String(error));
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const postsCollection = collection(firestore, "recipes");
-    const postsQuery = query(postsCollection, orderBy("timestamp", "desc")); // Order by timestamp descending
-
-    const unsubscribe = onSnapshot(postsQuery, (snapshot) => {
-      const postsList = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Recipe[];
-      setPosts(postsList);
-      setLoading(false); // Set loading to false after posts are fetched
-    });
-
-    // Cleanup the listener on unmount
-    return () => unsubscribe();
+    fetchPosts();
   }, []);
 
   const handleRecipeSubmit = async (recipe: Recipe) => {
     try {
-      const postsCollection = collection(firestore, "recipes");
-      await addDoc(postsCollection, recipe);
-      console.log("New recipe added with ID: ", recipe.id);
-      // The onSnapshot listener will handle the state update
-    } catch (error) {
-      console.error("Error adding document: ", error);
+      const response = await fetch("/api/recipes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(recipe),
+      });
+
+      if (response.ok) {
+        console.log("New recipe added");
+        fetchPosts(); // Optionally re-fetch posts to update the state
+      } else {
+        const errorText = await response.text();
+        console.error("Error adding recipe:", errorText);
+      }
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error("Error adding recipe:", error.message);
+      } else {
+        console.error("Error adding recipe:", String(error));
+      }
     }
   };
 
   const handleCommentSubmit = async (postId: string, comment: Comment) => {
     try {
-      console.log("postId:", postId);
-      const postsCollection = collection(firestore, "recipes");
-      const postsQuery = query(postsCollection, where("id", "==", postId));
-      const querySnapshot = await getDocs(postsQuery);
-
-      if (!querySnapshot.empty) {
-        const postDoc = querySnapshot.docs[0];
-        const post = postDoc.data() as Recipe;
-        const updatedComments = [...post.comments, comment];
-        const postRef = doc(firestore, `recipes/${postDoc.id}`);
-        await updateDoc(postRef, { comments: updatedComments });
-        console.log("Comment added:", comment);
-        // The state will be updated by the onSnapshot listener
+      const postRef = doc(firestore, "recipes", postId);
+      await updateDoc(postRef, {
+        comments: arrayUnion(comment),
+      });
+      console.log("Comment added");
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error("Error adding comment:", error.message);
       } else {
-        console.error("Post does not exist:", postId);
+        console.error("Error adding comment:", String(error));
       }
-    } catch (error) {
-      console.error("Error updating document: ", error);
     }
   };
 
