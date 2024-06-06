@@ -12,6 +12,8 @@ import { Recipe, Comment } from "@/components/types";
 import { formatTimestamp } from "@/utils/formatTimeStamp";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/pages/firebase/config";
+import Rating from "@/components/Rating"; // Import the Rating component
+import Navbar from "@/components/Navbar"; // Import the Navbar component
 
 const PostPage: React.FC = () => {
   const router = useRouter();
@@ -42,7 +44,9 @@ const PostPage: React.FC = () => {
           const userDoc = await getDoc(doc(firestore, "users", user.uid));
           if (userDoc.exists()) {
             const userData = userDoc.data();
-            const fullName = `${userData.firstName} ${userData.lastName}`;
+            const fullName = `${(userData as any).firstName} ${
+              (userData as any).lastName
+            }`;
             setUserName(fullName || user.email || "");
           }
         } catch (error: unknown) {
@@ -73,7 +77,7 @@ const PostPage: React.FC = () => {
         timestamp: Timestamp.now(),
       };
       try {
-        const postRef = doc(firestore, "recipes", id as string); // Use the actual Firestore document ID from the URL
+        const postRef = doc(firestore, "recipes", id as string);
         await updateDoc(postRef, {
           comments: arrayUnion(newComment),
         });
@@ -90,76 +94,111 @@ const PostPage: React.FC = () => {
     }
   };
 
+  const handleRatingSubmit = async (newAverageRating: number) => {
+    if (post) {
+      try {
+        const postRef = doc(firestore, "recipes", id as string);
+        await updateDoc(postRef, {
+          averageRating: newAverageRating,
+        });
+        setPost({ ...post, averageRating: newAverageRating });
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          console.error("Error updating rating:", error.message);
+        } else {
+          console.error("Error updating rating:", String(error));
+        }
+      }
+    }
+  };
+
   if (!post) return <p>Loading...</p>;
 
+  const userRating =
+    post.ratings.find((rating) => rating.userId === user?.uid)?.rating || null;
+
   return (
-    <div className="container mx-auto p-4">
-      <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-2xl mx-auto">
-        <h1 className="text-2xl font-bold mb-4">{post.title}</h1>
-        <p className="text-gray-600 mb-2">Cooking Time: {post.cookingTime}</p>
-        <h4 className="font-bold">Ingredients:</h4>
-        <ul className="list-disc ml-5 mb-2">
-          {post.ingredients.map((ingredient, idx) => (
-            <li key={idx} className="text-gray-800">
-              {ingredient}
-            </li>
-          ))}
-        </ul>
-        <h4 className="font-bold">Preparation Steps:</h4>
-        <ol className="list-decimal ml-5 mb-2">
-          {post.steps.map((step, idx) => (
-            <li key={idx} className="text-gray-800">
-              {step}
-            </li>
-          ))}
-        </ol>
-        <div className="grid grid-cols-2 gap-4">
-          {post.imageUrls.map((imageUrl, idx) => (
-            <img
-              key={idx}
-              src={imageUrl}
-              alt={`Post Image ${idx}`}
-              className="object-cover w-full h-40 rounded-lg"
+    <div>
+      <Navbar />
+      <div className="container mx-auto p-4">
+        <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-2xl mx-auto">
+          <h1 className="text-2xl font-bold mb-4">{post.title}</h1>
+          <p className="text-gray-600 mb-2">Cooking Time: {post.cookingTime}</p>
+          <h4 className="font-bold">Ingredients:</h4>
+          <ul className="list-disc ml-5 mb-2">
+            {post.ingredients.map((ingredient, idx) => (
+              <li key={idx} className="text-gray-800">
+                {ingredient}
+              </li>
+            ))}
+          </ul>
+          <h4 className="font-bold">Preparation Steps:</h4>
+          <ol className="list-decimal ml-5 mb-2">
+            {post.steps.map((step, idx) => (
+              <li key={idx} className="text-gray-800">
+                {step}
+              </li>
+            ))}
+          </ol>
+          <div className="grid grid-cols-2 gap-4">
+            {post.imageUrls.map((imageUrl, idx) => (
+              <img
+                key={idx}
+                src={imageUrl}
+                alt={`Post Image ${idx}`}
+                className="object-cover w-full h-40 rounded-lg"
+              />
+            ))}
+          </div>
+          <div className="mb-4 mt-4">
+            <Rating
+              postId={id as string}
+              currentRating={post.averageRating}
+              userRating={userRating}
+              onRatingSubmit={handleRatingSubmit}
             />
-          ))}
-        </div>
-        <div className="mt-4">
-          <h3 className="text-lg font-bold mb-2">Comments</h3>
-          {localComments.length === 0 ? (
-            <p className="text-gray-600">
-              No comments yet. Be the first to comment!
+            <p className="text-gray-600 mt-2">
+              Average Rating: {post.averageRating.toFixed(1)}
             </p>
-          ) : (
-            localComments.map((comment, idx) => (
-              <div key={idx} className="mb-2">
-                <div className="flex items-center mb-1">
-                  <div className="mr-2 text-gray-700 font-bold">
-                    {comment.userName}
+          </div>
+          <div className="mt-4">
+            <h3 className="text-lg font-bold mb-2">Comments</h3>
+            {localComments.length === 0 ? (
+              <p className="text-gray-600">
+                No comments yet. Be the first to comment!
+              </p>
+            ) : (
+              localComments.map((comment, idx) => (
+                <div key={idx} className="mb-2">
+                  <div className="flex items-center mb-1">
+                    <div className="mr-2 text-gray-700 font-bold">
+                      {comment.userName}
+                    </div>
+                    <div className="text-gray-500 text-sm">
+                      {formatTimestamp(comment.timestamp)}
+                    </div>
                   </div>
-                  <div className="text-gray-500 text-sm">
-                    {formatTimestamp(comment.timestamp)}
-                  </div>
+                  <p className="text-gray-800">{comment.content}</p>
                 </div>
-                <p className="text-gray-800">{comment.content}</p>
-              </div>
-            ))
-          )}
+              ))
+            )}
+          </div>
+          <form onSubmit={handleCommentSubmit} className="mt-4">
+            <textarea
+              value={commentContent}
+              onChange={handleCommentChange}
+              placeholder="Write your comment..."
+              className="w-full p-3 mb-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-fe654f"
+              rows={2}
+            />
+            <button
+              type="submit"
+              className="bg-fe654f text-white py-2 px-4 rounded-md hover:bg-fed99b focus:outline-none focus:ring-2 focus:ring-fe654f focus:ring-opacity-50"
+            >
+              Submit Comment
+            </button>
+          </form>
         </div>
-        <form onSubmit={handleCommentSubmit} className="mt-4">
-          <textarea
-            value={commentContent}
-            onChange={handleCommentChange}
-            placeholder="Write your comment..."
-            className="w-full p-3 mb-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-fe654f"
-            rows={2}
-          />
-          <button
-            type="submit"
-            className="bg-fe654f text-white py-2 px-4 rounded-md hover:bg-fed99b focus:outline-none focus:ring-2 focus:ring-fe654f focus:ring-opacity-50"
-          >
-            Submit Comment
-          </button>
-        </form>
       </div>
     </div>
   );

@@ -1,4 +1,3 @@
-// pages/myrecipes/index.tsx
 import React, { useState, useEffect } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/pages/firebase/config";
@@ -17,7 +16,7 @@ const UserRecipes: React.FC = () => {
     const fetchUserRecipes = async () => {
       if (user) {
         try {
-          const response = await axios.get("/api/recipes", {
+          const response = await axios.get("/api/user-recipes", {
             params: { uid: user.uid },
           });
           setRecipes(response.data);

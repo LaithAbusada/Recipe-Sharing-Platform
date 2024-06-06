@@ -97,6 +97,7 @@ const CreateRecipe: React.FC<CreateRecipeProps> = ({ onRecipeSubmit }) => {
           cookingTime,
           imageUrls: [], // Initialize as an empty array, to be filled after upload
           userName,
+          userId: user?.uid || "", // Add userId field
           timestamp,
           comments: [], // Initialize comments as an empty array
           ratings: [],

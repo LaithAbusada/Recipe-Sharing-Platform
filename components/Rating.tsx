@@ -43,6 +43,7 @@ const Rating: React.FC<RatingProps> = ({
 
   return (
     <div className="flex items-center">
+      <span className="mr-2">Rate this recipe:</span>
       {[1, 2, 3, 4, 5].map((star) => (
         <FontAwesomeIcon
           key={star}

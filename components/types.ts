@@ -1,4 +1,3 @@
-// src/pages/types.ts
 import { Timestamp } from "firebase/firestore";
 
 export interface Comment {
@@ -21,6 +20,7 @@ export interface Recipe {
   cookingTime: string;
   imageUrls: string[];
   userName: string;
+  userId: string; // Added userId field
   timestamp: Timestamp;
   comments: Comment[];
   ratings: Rating[];
