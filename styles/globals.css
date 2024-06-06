@@ -41,3 +41,13 @@ body {
     transform: rotate(360deg);
   }
 }
+
+/* Add this to your global CSS or a dedicated CSS file for custom styles */
+.Toastify__toast--success {
+  background-color: #4caf50; /* Custom success color */
+  color: white; /* Custom text color */
+}
+
+.Toastify__progress-bar--success {
+  background-color: #2e7d32; /* Custom progress bar color */
+}
