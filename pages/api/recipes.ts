@@ -12,7 +12,7 @@ import {
   getDoc,
   Timestamp,
 } from "firebase/firestore";
-import { Recipe, Comment } from "@/components/types";
+import { Recipe, Comment, Rating } from "@/components/types";
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
@@ -31,10 +31,11 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       const newRecipe: Omit<Recipe, "id"> = req.body;
       const postsCollection = collection(firestore, "recipes");
 
-      // Ensure timestamp is a Firestore Timestamp
       const recipeWithTimestamp = {
         ...newRecipe,
         timestamp: Timestamp.now(),
+        ratings: [],
+        averageRating: 0,
       };
 
       const docRef = await addDoc(postsCollection, recipeWithTimestamp);
@@ -45,34 +46,38 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     }
 
     if (req.method === "PUT") {
-      const { postId, comment }: { postId: string; comment: Comment } =
-        req.body;
+      const { postId, rating }: { postId: string; rating: Rating } = req.body;
       const postRef = doc(firestore, "recipes", postId);
       const postDoc = await getDoc(postRef);
 
       if (postDoc.exists()) {
         const post = postDoc.data() as Recipe;
-        const updatedComments = [...post.comments, comment];
-        await updateDoc(postRef, { comments: updatedComments });
-        return res.status(200).json({ message: "Comment added successfully" });
+        const existingRatingIndex = post.ratings.findIndex(
+          (r) => r.userId === rating.userId
+        );
+
+        if (existingRatingIndex >= 0) {
+          post.ratings[existingRatingIndex].rating = rating.rating;
+        } else {
+          post.ratings.push(rating);
+        }
+
+        const totalRating = post.ratings.reduce((acc, r) => acc + r.rating, 0);
+        const averageRating = totalRating / post.ratings.length;
+
+        await updateDoc(postRef, { ratings: post.ratings, averageRating });
+        return res.status(200).json({ averageRating });
       } else {
         return res.status(404).json({ message: "Post not found" });
       }
     }
 
     return res.status(405).json({ message: "Method not allowed" });
-  } catch (error: unknown) {
-    if (error instanceof Error) {
-      console.error("Internal server error:", error.message);
-      return res
-        .status(500)
-        .json({ message: "Internal server error", error: error.message });
-    } else {
-      console.error("Internal server error:", String(error));
-      return res
-        .status(500)
-        .json({ message: "Internal server error", error: String(error) });
-    }
+  } catch (error) {
+    console.error("Internal server error:", error);
+    return res
+      .status(500)
+      .json({ message: "Internal server error", error: String(error) });
   }
 };
 

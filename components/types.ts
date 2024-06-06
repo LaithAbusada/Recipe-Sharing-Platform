@@ -8,6 +8,11 @@ export interface Comment {
   timestamp: Timestamp;
 }
 
+export interface Rating {
+  userId: string;
+  rating: number;
+}
+
 export interface Recipe {
   id: string;
   title: string;
@@ -18,6 +23,8 @@ export interface Recipe {
   userName: string;
   timestamp: Timestamp;
   comments: Comment[];
+  ratings: Rating[];
+  averageRating: number;
 }
 
 export type NewRecipe = Omit<Recipe, "id">;

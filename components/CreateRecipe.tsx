@@ -99,6 +99,8 @@ const CreateRecipe: React.FC<CreateRecipeProps> = ({ onRecipeSubmit }) => {
           userName,
           timestamp,
           comments: [], // Initialize comments as an empty array
+          ratings: [],
+          averageRating: 0,
         };
 
         const uploadPromises = images.map(async (image) => {

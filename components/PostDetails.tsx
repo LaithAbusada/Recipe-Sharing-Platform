@@ -1,3 +1,4 @@
+// src/components/PostDetails.tsx
 import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
@@ -7,6 +8,7 @@ import { formatTimestamp } from "@/utils/formatTimeStamp";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/pages/firebase/config";
 import axios from "axios";
+import Rating from "./Rating";
 
 interface PostDetailsProps {
   post: Recipe;
@@ -21,6 +23,9 @@ const PostDetails: React.FC<PostDetailsProps> = ({
 }) => {
   const [commentContent, setCommentContent] = useState<string>("");
   const [localComments, setLocalComments] = useState<Comment[]>(post.comments);
+  const [averageRating, setAverageRating] = useState<number>(
+    post.averageRating
+  );
   const [userName, setUserName] = useState<string>("");
   const [user, loadingAuth, errorAuth] = useAuthState(auth);
 
@@ -48,7 +53,7 @@ const PostDetails: React.FC<PostDetailsProps> = ({
   };
 
   const handleCommentSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); // Prevent the default form submission behavior
+    e.preventDefault();
     if (commentContent.trim()) {
       const newComment: Comment = {
         id: Math.random().toString(36).substr(2, 9),
@@ -60,11 +65,14 @@ const PostDetails: React.FC<PostDetailsProps> = ({
         await onCommentSubmit(post.id, newComment);
         setLocalComments([...localComments, newComment]);
         setCommentContent("");
-        console.log("New comment added:", newComment);
       } catch (error) {
         console.error("Error adding comment:", error);
       }
     }
+  };
+
+  const handleRatingSubmit = (newAverageRating: number) => {
+    setAverageRating(newAverageRating);
   };
 
   return (
@@ -111,6 +119,20 @@ const PostDetails: React.FC<PostDetailsProps> = ({
                 className="object-cover w-full h-40 rounded-lg"
               />
             ))}
+          </div>
+          <Rating
+            postId={post.id}
+            currentRating={averageRating}
+            userRating={
+              user
+                ? post.ratings.find((r) => r.userId === user?.uid)?.rating ||
+                  null
+                : null
+            }
+            onRatingSubmit={handleRatingSubmit}
+          />
+          <div className="text-gray-600 mt-2">
+            Average Rating: {averageRating.toFixed(1)}
           </div>
         </div>
         <div>
