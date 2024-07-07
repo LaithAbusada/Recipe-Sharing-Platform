@@ -1,41 +1,65 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
-## Getting Started
+# Recipe Sharing Platform
 
-First, run the development server:
+## Objective
+Create a React application that is intuitive and demonstrates proficiency in React and web development best practices.
 
+## Core Features
+1. **User Authentication**:
+   - Implement user signup and login using Google Firebase Authentication. This includes handling OAuth flows for smoother user experiences.
+   
+2. **Recipe Management**:
+   - Users can create, edit, and delete their recipes. Each recipe can include ingredients, preparation steps, cooking times, and an associated image.
+   - Use Firebase Firestore to store recipe data.   
+   
+   
+3. **Comments and Ratings**:
+   - Allow users to comment on and rate recipes.
+
+## Technology
+- **Frontend**: React.js with Next.js for server-side rendering to enhance SEO.
+- **Styling**: Tailwind CSS for responsive and modern UI design.
+- **Type Safety**: TypeScript for type safety and better developer experience.
+- **SEO Optimization**: Next.js capabilities for SEO-friendly practices, such as dynamic rendering of meta tags based on the content.
+- **Firebase FireStore** : Utilized Firebase Firestore as backend for this application.
+- **Firebase Storage** : Allow users to upload images for recipes using Firebase Storage, which provides secure file uploads and downloads for Firebase apps.
+
+
+## Installation
+
+### Clone the repository:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/LaithAbusada/Recipe-Sharing-Platform.git
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Navigate to the project directory:
+```bash
+cd Recipe-Sharing-Platform
+```
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+### Install dependencies:
+```bash
+npm install
+```
 
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+### Start the development server:
+```bash
+npm start
+```
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
+## Usage
+1. Enter your email and password to login.
+2. Create, edit, and delete recipes.
+3. Comment on and rate recipes.
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+## ScreenShots
+![image](https://github.com/LaithAbusada/Recipe-Sharing-Platform/assets/116557112/be57a9df-1108-4aa3-8e6a-105779426091)
+![image (5)](https://github.com/LaithAbusada/Recipe-Sharing-Platform/assets/116557112/5eb6c877-fcf2-4464-93f4-ab3d66351088)
+![image (2)](https://github.com/LaithAbusada/Recipe-Sharing-Platform/assets/116557112/96ad078c-d337-4d9e-b227-0094093265d0)
+![image (3)](https://github.com/LaithAbusada/Recipe-Sharing-Platform/assets/116557112/d7b5a0e9-91c4-401c-bdd7-f200882f2fad)
+![image (4)](https://github.com/LaithAbusada/Recipe-Sharing-Platform/assets/116557112/433fb51f-e3c1-4807-bdc5-4942d7d1df31)
 
-## Learn More
 
-To learn more about Next.js, take a look at the following resources:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
-# Recipe-Sharing-Platform
+## License
+This project is licensed under the MIT License.
